@@ -542,24 +542,30 @@
                 syncBadgeEl.style.background = "rgba(16, 185, 129, 0.4)";
                 syncStatusEl.textContent = "✅ Auto-Syncing";
 
-                // Direct client sync (no-cors requires text/plain or no custom header)
-                try {
-                    fetch(webhook, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: { "Content-Type": "text/plain;charset=utf-8" },
-                        body: JSON.stringify({
-                            time: timeParam,
-                            click: clickParam,
-                            score: scoreParam
-                        })
-                    }).then(() => {
-                        syncStatusEl.textContent = "✅ Synced to Sheet!";
-                    }).catch((err) => {
-                        console.warn("Client sync note:", err);
-                    });
-                } catch(e) {
-                    console.warn("Client sync error:", e);
+                // Sync to sheet if not already sent by game over event
+                const syncKey = `${timeParam}_${clickParam}_${scoreParam}`;
+                if (sessionStorage.getItem("pacrush_synced_token") === syncKey) {
+                    syncStatusEl.textContent = "✅ Synced to Sheet!";
+                } else {
+                    sessionStorage.setItem("pacrush_synced_token", syncKey);
+                    try {
+                        fetch(webhook, {
+                            method: "POST",
+                            mode: "no-cors",
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify({
+                                time: timeParam,
+                                click: clickParam,
+                                score: scoreParam
+                            })
+                        }).then(() => {
+                            syncStatusEl.textContent = "✅ Synced to Sheet!";
+                        }).catch((err) => {
+                            console.warn("Client sync note:", err);
+                        });
+                    } catch(e) {
+                        console.warn("Client sync error:", e);
+                    }
                 }
             } else {
                 syncBadgeEl.textContent = "READY TO CONNECT";

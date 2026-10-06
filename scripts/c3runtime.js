@@ -1584,8 +1584,7 @@ self.C3_ExpressionFuncs = [
 		},
 		() => "OVER",
 		p => {
-			const v0 = p._GetNode(0).GetVar();
-			return () => ("https://ghoori.b2mwap.com/PacRushNew/gameover/" + v0.GetValue());
+			return () => (globalThis.pacrushGameOverUrl || "game-over/");
 		},
 		() => 270,
 		p => {

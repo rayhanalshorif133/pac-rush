@@ -227,9 +227,18 @@ try {
         localStorage.setItem("pacrush_notes_history", history);
     } catch(e) {}
     
-    // Direct Google Sheet webhook call
+    // Build target game-over URL and save globally for Construct 3 runtime navigation
+    const targetGameOverUrl = `game-over/?time=${encodeURIComponent(timeStr)}&click=${clicksVal}&score=${scoreVal}`;
+    globalThis.pacrushGameOverUrl = targetGameOverUrl;
+
+    const payload = JSON.stringify({ line: line, time: timeStr, click: clicksVal, score: scoreVal });
+    const headers = { "Content-Type": "application/json" };
+
+    // 1. Direct Google Sheet webhook call (Works on GitHub Pages & Localhost)
     try {
         const webhookUrl = localStorage.getItem("pacrush_sheet_webhook") || "https://script.google.com/macros/s/AKfycbx5f2y6W8RTQDw7jVKnnC0qIaewXRCnbgJ8mSAlOKTDym_Ga9vmhuCt_V3SbAY7Umaf/exec";
+        const syncKey = `${timeStr}_${clicksVal}_${scoreVal}`;
+        sessionStorage.setItem("pacrush_synced_token", syncKey);
         fetch(webhookUrl, {
             method: "POST",
             mode: "no-cors",
@@ -238,18 +247,16 @@ try {
         }).catch(() => {});
     } catch(e) {}
 
-    // Send to backend server to append to note.txt and redirect to game-over/
-    const payload = JSON.stringify({ line: line, time: timeStr, click: clicksVal, score: scoreVal });
-    const headers = { "Content-Type": "application/json" };
-    
-    Promise.allSettled([
-        fetch("/api/log", { method: "POST", headers: headers, body: payload }),
-        fetch("http://localhost:8080/api/log", { method: "POST", headers: headers, body: payload })
-    ]).finally(() => {
-        setTimeout(() => {
-            window.location.href = `game-over/?time=${encodeURIComponent(timeStr)}&click=${clicksVal}&score=${scoreVal}`;
-        }, 300);
-    });
+    // 2. Also send to local backend server if running
+    try {
+        fetch("/api/log", { method: "POST", headers: headers, body: payload }).catch(() => {});
+        fetch("http://localhost:8080/api/log", { method: "POST", headers: headers, body: payload }).catch(() => {});
+    } catch(e) {}
+
+    // 3. Redirect to game-over/
+    setTimeout(() => {
+        window.location.href = targetGameOverUrl;
+    }, 150);
 } catch(e) {
     window.location.href = "game-over/";
 }
