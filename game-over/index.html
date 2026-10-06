@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Over - Pac Rush</title>
+    <link rel="icon" type="image/png" href="../icons/icon-256.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #090d16;
+            background: radial-gradient(circle at center, #131d36 0%, #070a12 100%);
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 255, 204, 0.15);
+            padding: 30px 24px;
+            text-align: center;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .game-over-badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ff3366;
+            text-shadow: 0 0 20px rgba(255, 51, 102, 0.6), 0 0 40px rgba(255, 51, 102, 0.2);
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 14px 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0, 255, 204, 0.4);
+        }
+
+        .stat-icon {
+            font-size: 18px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-val {
+            font-size: 20px;
+            font-weight: 800;
+            color: #f8fafc;
+            font-family: monospace;
+        }
+
+        .stat-val.score {
+            color: #00ffcc;
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+        }
+
+        .stat-val.time {
+            color: #38bdf8;
+        }
+
+        .stat-val.clicks {
+            color: #facc15;
+        }
+
+        /* Note Status Notice */
+        .note-status-box {
+            background: rgba(0, 255, 204, 0.08);
+            border: 1px dashed rgba(0, 255, 204, 0.35);
+            border-radius: 10px;
+            padding: 9px 12px;
+            font-size: 12px;
+            color: #5eead4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        /* Google Sheet Card */
+        .sheet-card {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .sheet-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .sheet-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #34d399;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sheet-badge {
+            background: rgba(16, 185, 129, 0.25);
+            color: #a7f3d0;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+        }
+
+        .sheet-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            background: #10b981;
+            color: #064e3b;
+            font-weight: 700;
+            font-size: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            margin-top: 4px;
+        }
+
+        .sheet-link-btn:hover {
+            background: #34d399;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+        }
+
+        .webhook-input-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .webhook-input {
+            flex: 1;
+            padding: 8px 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .webhook-save-btn {
+            padding: 8px 12px;
+            background: rgba(0, 255, 204, 0.2);
+            border: 1px solid rgba(0, 255, 204, 0.4);
+            color: #00ffcc;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .webhook-save-btn:hover {
+            background: rgba(0, 255, 204, 0.35);
+        }
+
+        /* Note.txt Section */
+        .note-viewer-section {
+            background: rgba(7, 10, 19, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 14px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .note-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .note-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #facc15;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .note-content {
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #a5f3fc;
+            max-height: 120px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 10px;
+            border-radius: 6px;
+        }
+
+        /* Action Buttons */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 13px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-play-again {
+            background: linear-gradient(135deg, #00ffcc 0%, #0099ff 100%);
+            color: #050b14;
+            box-shadow: 0 4px 20px rgba(0, 255, 204, 0.4);
+        }
+
+        .btn-play-again:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 255, 204, 0.6);
+        }
+
+        .btn-download {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #e2e8f0;
+        }
+
+        .btn-download:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-over-badge">Pac Rush</div>
+        <h1 class="title">GAME OVER</h1>
+        <p class="subtitle">আপনার গেমপ্লে সেশন সমাপ্ত হয়েছে</p>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-icon">⏱</span>
+                <span class="stat-label">Time</span>
+                <span class="stat-val time" id="val-time">0m 0s</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">🎯</span>
+                <span class="stat-label">Clicks</span>
+                <span class="stat-val clicks" id="val-clicks">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">🏆</span>
+                <span class="stat-label">Score</span>
+                <span class="stat-val score" id="val-score">0</span>
+            </div>
+        </div>
+
+        <!-- Note Insertion Notice -->
+        <div class="note-status-box">
+            <span>✅</span>
+            <span>note.txt ফাইলে আগের সকল রেকর্ডের পর সফলভাবে যুক্ত হয়েছে!</span>
+        </div>
+
+        <!-- Google Sheet Integration Card -->
+        <div class="sheet-card">
+            <div class="sheet-card-header">
+                <span class="sheet-title">📊 Google Sheet: Pac RUsh</span>
+                <span class="sheet-badge" id="sheet-sync-badge">CONNECTED</span>
+            </div>
+            <p style="font-size: 11px; color: #cbd5e1; margin-bottom: 6px;">
+                আপনার গুগল স্প্রেডশীট লিঙ্ক করা রয়েছে।
+            </p>
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                <a href="https://docs.google.com/spreadsheets/d/1syWTsKaf2nqY_Nru9m2vZrwjh-QqLjWYiaUguFGMIeQ/edit" target="_blank" class="sheet-link-btn">
+                    <span>🔗 Open Google Sheet</span>
+                    <span>↗</span>
+                </a>
+                <span id="sheet-sync-status" style="font-size: 11px; color: #34d399; font-weight: 600;"></span>
+            </div>
+
+            <div id="webhook-setup-panel" style="margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px;">
+                <div style="font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Apps Script Webhook URL:</span>
+                    <a href="javascript:void(0)" id="toggle-help" style="color: #00ffcc; text-decoration: none;">সেটআপ গাইড (?)</a>
+                </div>
+                <div class="webhook-input-row">
+                    <input type="text" id="webhook-url-input" class="webhook-input" placeholder="https://script.google.com/macros/s/.../exec">
+                    <button class="webhook-save-btn" id="save-webhook-btn">Save</button>
+                </div>
+                <div id="setup-help-box" style="display: none; margin-top: 8px; font-size: 11px; color: #cbd5e1; line-height: 1.5; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 6px;">
+                    <b>৩ স্টেপে গুগল শিট কানেক্ট করুন:</b><br>
+                    ১. স্প্রেডশীট ওপেন করুন > Extensions > Apps Script<br>
+                    ২. প্রজেক্টের <code>google_apps_script.js</code> ফাইলের কোড পেস্ট করুন<br>
+                    ৩. Deploy > New deployment > Web app > Who has access: <b>Anyone</b><br>
+                    ৪. Web App URL কপি করে ওপরের বক্সে পেস্ট করে Save চাপুন।
+                </div>
+            </div>
+        </div>
+
+        <!-- Note.txt Live Viewer -->
+        <div class="note-viewer-section">
+            <div class="note-header">
+                <div class="note-title">
+                    <span>📄</span>
+                    <span>note.txt ফাইল হিস্টোরি (সকল রেকর্ড):</span>
+                </div>
+                <span style="font-size: 11px; color: #94a3b8;">Format: Time - Click - Score</span>
+            </div>
+            <pre class="note-content" id="note-file-content">লোড হচ্ছে...</pre>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-group">
+            <a href="../index.html" class="btn btn-play-again" id="btn-play-again">
+                <span>🔄</span>
+                <span>Play Again (আবার খেলুন)</span>
+            </a>
+            <button class="btn btn-download" id="btn-download-note">
+                <span>💾</span>
+                <span>Download note.txt</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Parse URL query parameters
+        const params = new URLSearchParams(window.location.search);
+        let timeParam = params.get("time");
+        let clickParam = params.get("click");
+        let scoreParam = params.get("score");
+
+        // Fallback to localStorage if params are not provided
+        if (!timeParam || !clickParam || !scoreParam) {
+            try {
+                const lastRun = JSON.parse(localStorage.getItem("pacrush_last_run") || "{}");
+                timeParam = timeParam || lastRun.time || "0m 0s";
+                clickParam = clickParam || lastRun.click || "0";
+                scoreParam = scoreParam || lastRun.score || "0";
+            } catch (e) {}
+        }
+
+        // Update Stats UI
+        document.getElementById("val-time").textContent = timeParam || "0m 0s";
+        document.getElementById("val-clicks").textContent = clickParam || "0";
+        document.getElementById("val-score").textContent = scoreParam || "0";
+
+        // Fetch current note.txt from server & localStorage preserving all previous records
+        async function fetchNoteContent() {
+            const preEl = document.getElementById("note-file-content");
+            let serverText = null;
+
+            // 1. Try fetching from server (/api/notes or http://localhost:8080/api/notes)
+            try {
+                const res = await fetch("/api/notes");
+                if (res.ok) {
+                    serverText = await res.text();
+                }
+            } catch (e) {}
+
+            if (!serverText) {
+                try {
+                    const res2 = await fetch("http://localhost:8080/api/notes");
+                    if (res2.ok) {
+                        serverText = await res2.text();
+                    }
+                } catch (e) {}
+            }
+
+            // 2. Read local cumulative history
+            let localNotes = localStorage.getItem("pacrush_notes_history") || "";
+
+            // If server text was found and valid:
+            if (serverText && serverText.includes("Time - Click - Score")) {
+                let text = serverText.trim();
+                const currentLine = ` ${timeParam} - ${clickParam} -  ${scoreParam}`;
+                if (timeParam && !text.includes(currentLine.trim())) {
+                    text += "\n" + currentLine;
+                }
+                preEl.textContent = text;
+                localStorage.setItem("pacrush_notes_history", text);
+                preEl.scrollTop = preEl.scrollHeight;
+                return;
+            }
+
+            // 3. Fallback: Use local cumulative history
+            if (localNotes && localNotes.includes("Time - Click - Score")) {
+                let text = localNotes.trim();
+                const currentLine = ` ${timeParam} - ${clickParam} -  ${scoreParam}`;
+                if (timeParam && !text.includes(currentLine.trim())) {
+                    text += "\n" + currentLine;
+                }
+                preEl.textContent = text;
+                localStorage.setItem("pacrush_notes_history", text);
+                preEl.scrollTop = preEl.scrollHeight;
+                return;
+            }
+
+            // 4. Baseline fallback including past records
+            const baseline = `Time - Click - Score \n 1m 9s - 17 -  370\n 1m 24s - 28 -  42\n ${timeParam} - ${clickParam} -  ${scoreParam}`;
+            preEl.textContent = baseline;
+            localStorage.setItem("pacrush_notes_history", baseline);
+        }
+
+        fetchNoteContent();
+
+        // Download note.txt button
+        document.getElementById("btn-download-note").addEventListener("click", () => {
+            const content = document.getElementById("note-file-content").textContent;
+            const blob = new Blob([content.trim() + "\n"], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "note.txt";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Google Sheet Webhook Management
+        const webhookInput = document.getElementById("webhook-url-input");
+        const syncStatusEl = document.getElementById("sheet-sync-status");
+        const syncBadgeEl = document.getElementById("sheet-sync-badge");
+
+        // Load config from server or localStorage
+        async function loadSheetConfig() {
+            let webhook = localStorage.getItem("pacrush_sheet_webhook") || "";
+            try {
+                const res = await fetch("/api/sheet_config");
+                if (res.ok) {
+                    const cfg = await res.json();
+                    if (cfg.webhook_url) webhook = cfg.webhook_url;
+                }
+            } catch (e) {}
+
+            if (webhook) {
+                webhookInput.value = webhook;
+                syncBadgeEl.textContent = "LIVE SYNC ACTIVE";
+                syncBadgeEl.style.background = "rgba(16, 185, 129, 0.4)";
+                syncStatusEl.textContent = "✅ Auto-Syncing";
+
+                // Direct client sync attempt as well
+                try {
+                    fetch(webhook, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            time: timeParam,
+                            click: clickParam,
+                            score: scoreParam
+                        })
+                    }).catch(() => {});
+                } catch(e) {}
+            } else {
+                syncBadgeEl.textContent = "READY TO CONNECT";
+                syncStatusEl.textContent = "Paste Webhook below";
+            }
+        }
+
+        loadSheetConfig();
+
+        document.getElementById("save-webhook-btn").addEventListener("click", async () => {
+            const url = webhookInput.value.trim();
+            localStorage.setItem("pacrush_sheet_webhook", url);
+            try {
+                await fetch("/api/set_sheet_webhook", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ webhook_url: url })
+                });
+            } catch(e) {}
+            loadSheetConfig();
+            alert("Google Sheet Webhook URL সংরক্ষিত হয়েছে!");
+        });
+
+        document.getElementById("toggle-help").addEventListener("click", () => {
+            const box = document.getElementById("setup-help-box");
+            box.style.display = box.style.display === "none" ? "block" : "none";
+        });
+
+        // Keyboard shortcut: Space or Enter to Play Again
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Space" || e.code === "Enter") {
+                window.location.href = "../index.html";
+            }
+        });
+    </script>
+</body>
+</html>
