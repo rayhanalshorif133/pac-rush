@@ -67,33 +67,48 @@ def append_to_notes(line):
             f.flush()
 
 
+import threading
+try:
+    import requests
+except ImportError:
+    requests = None
+
+
 def sync_to_google_sheet(data):
-    """Sends gameplay data to Google Sheet webhook if configured."""
+    """Sends gameplay data to Google Sheet webhook asynchronously in background thread."""
     cfg = load_sheet_config()
     webhook_url = cfg.get("webhook_url", "").strip()
     if not webhook_url:
+        print("[GOOGLE SHEET SYNC] Skipped: No webhook_url configured")
         return False, "No webhook_url configured"
 
-    try:
-        payload = json.dumps({
-            "time": data.get("time", ""),
-            "click": data.get("click", 0),
-            "score": data.get("score", 0),
-            "line": data.get("line", "")
-        }).encode("utf-8")
+    payload = {
+        "time": data.get("time", ""),
+        "click": data.get("click", 0),
+        "score": data.get("score", 0),
+        "line": data.get("line", "")
+    }
 
-        req = urllib.request.Request(
-            webhook_url,
-            data=payload,
-            headers={"Content-Type": "application/json"}
-        )
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            resp_body = resp.read().decode("utf-8")
-            print(f"[GOOGLE SHEET SYNC] Success: {resp_body[:100]}")
-            return True, "Synced to Google Sheet"
-    except Exception as e:
-        print(f"[GOOGLE SHEET SYNC ERROR] {e}")
-        return False, str(e)
+    def _worker():
+        try:
+            if requests:
+                resp = requests.post(webhook_url, json=payload, timeout=20)
+                print(f"[GOOGLE SHEET SYNC] Success! HTTP {resp.status_code}")
+            else:
+                body = json.dumps(payload).encode("utf-8")
+                req = urllib.request.Request(
+                    webhook_url,
+                    data=body,
+                    headers={"Content-Type": "application/json"}
+                )
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    print(f"[GOOGLE SHEET SYNC] Success! {resp.status}")
+        except Exception as err:
+            print(f"[GOOGLE SHEET SYNC ERROR] {err}")
+
+    thread = threading.Thread(target=_worker, daemon=True)
+    thread.start()
+    return True, "Syncing in background"
 
 
 class GameRequestHandler(http.server.SimpleHTTPRequestHandler):

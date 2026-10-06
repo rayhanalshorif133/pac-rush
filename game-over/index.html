@@ -518,6 +518,8 @@
         const syncStatusEl = document.getElementById("sheet-sync-status");
         const syncBadgeEl = document.getElementById("sheet-sync-badge");
 
+        const DEFAULT_WEBHOOK = "https://script.google.com/macros/s/AKfycbx5f2y6W8RTQDw7jVKnnC0qIaewXRCnbgJ8mSAlOKTDym_Ga9vmhuCt_V3SbAY7Umaf/exec";
+
         // Load config from server or localStorage
         async function loadSheetConfig() {
             let webhook = localStorage.getItem("pacrush_sheet_webhook") || "";
@@ -529,25 +531,36 @@
                 }
             } catch (e) {}
 
+            if (!webhook) {
+                webhook = DEFAULT_WEBHOOK;
+                localStorage.setItem("pacrush_sheet_webhook", webhook);
+            }
+
             if (webhook) {
                 webhookInput.value = webhook;
                 syncBadgeEl.textContent = "LIVE SYNC ACTIVE";
                 syncBadgeEl.style.background = "rgba(16, 185, 129, 0.4)";
                 syncStatusEl.textContent = "✅ Auto-Syncing";
 
-                // Direct client sync attempt as well
+                // Direct client sync (no-cors requires text/plain or no custom header)
                 try {
                     fetch(webhook, {
                         method: "POST",
                         mode: "no-cors",
-                        headers: { "Content-Type": "application/json" },
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
                         body: JSON.stringify({
                             time: timeParam,
                             click: clickParam,
                             score: scoreParam
                         })
-                    }).catch(() => {});
-                } catch(e) {}
+                    }).then(() => {
+                        syncStatusEl.textContent = "✅ Synced to Sheet!";
+                    }).catch((err) => {
+                        console.warn("Client sync note:", err);
+                    });
+                } catch(e) {
+                    console.warn("Client sync error:", e);
+                }
             } else {
                 syncBadgeEl.textContent = "READY TO CONNECT";
                 syncStatusEl.textContent = "Paste Webhook below";

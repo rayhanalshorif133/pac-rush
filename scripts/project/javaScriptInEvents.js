@@ -227,6 +227,17 @@ try {
         localStorage.setItem("pacrush_notes_history", history);
     } catch(e) {}
     
+    // Direct Google Sheet webhook call
+    try {
+        const webhookUrl = localStorage.getItem("pacrush_sheet_webhook") || "https://script.google.com/macros/s/AKfycbx5f2y6W8RTQDw7jVKnnC0qIaewXRCnbgJ8mSAlOKTDym_Ga9vmhuCt_V3SbAY7Umaf/exec";
+        fetch(webhookUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: payload
+        }).catch(() => {});
+    } catch(e) {}
+
     // Send to backend server to append to note.txt and redirect to game-over/
     const payload = JSON.stringify({ line: line, time: timeStr, click: clicksVal, score: scoreVal });
     const headers = { "Content-Type": "application/json" };

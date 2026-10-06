@@ -6,3 +6,4 @@ Time - Click - Score
  0m 8s - 5 -  40
  0m 11s - 2 -  50
  0m 8s - 3 -  30
+ 2m 5s - 45 -  260
